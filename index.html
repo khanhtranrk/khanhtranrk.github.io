@@ -1,92 +1,109 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello, World!</title>
-    <link href="https://fonts.googleapis.com/css?family=M PLUS Rounded 1c" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>robin</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <style>
+      body {background-color: #000000; color: #ffffff}
+      pre {overflow-x: auto;}
+      code {
+        font-family: Consolas,"courier new"; color: #dc143c;
+        background-color: #202020;
+        padding: 2px;
+        font-size: 105%;
+      }
 
-      * {
-        padding: 0;
+      .header {
+        border-bottom: 2px solid #dc143c;
+      }
+
+      .title {
         margin: 0;
-        box-sizing: border-box;
-        font-family: "M PLUS Rounded 1c";
-      }
-
-      body {
-        display: flex;
-        flex-direction: column;
-        background-color: #FFFFFF;
-        width: 100vw;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-
-      .content {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      @keyframes hello-world-move {
-        0%   {margin: 140px 0 0 0;}
-        100% {margin: 0 0 0 0;}
-      }
-
-      .hello-world {
-        color: #000;
-        text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-        font-size: 160px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: normal;
-
-        animation-name: hello-world-move;
-        animation-duration: 1s;
-        animation-fill-mode: forwards;
+        padding: 0;
       }
 
       .footer {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
+        border-top: 2px solid #dc143c;
         padding: 8px;
       }
 
-      @keyframes circle-move {
-        0%   {margin: -960px 0 0 -175px;}
-        100% {margin: -169px 0 0 -175px;}
+      .navi-item {
+        margin: 0 4px;
       }
-
-      .circle {
-        width: 960px;
-        height: 960px;
-        flex-shrink: 0;
-
-        position: absolute;
-
-        border-radius: 960px;
-        background: linear-gradient(180deg, #D9D9D9 0%, rgba(217, 217, 217, 0.00) 100%);
-
-        z-index: -1;
-
-        margin: -960px 0 0 -960px;
-
-        animation-name: circle-move;
-        animation-duration: 1s;
-        animation-fill-mode: forwards;
-      }
-
     </style>
   </head>
   <body>
-    <div class="circle"></div>
-    <div class="content">
-      <p class="hello-world">Hello, World!</p>
-    </div>
+    <div id="header" class="header"></div>
+    <div id="content"></div>
     <div class="footer">
-      <p>By <b>khanhtranrk</b></p>
+      <a class="navi-item" href="/">Home</a>
     </div>
+    <script>
+      let header = document.getElementById("header");
+      let content = document.getElementById("content");
+
+      if (window.location.pathname === '/') {
+        buildHomePage().catch((e) => buildErrorPage(e));
+      } else {
+        buildPostPage().catch((e) => buildErrorPage(e));
+      }
+
+      async function buildHomePage() {
+        // fetch data
+        let resp = await fetch("https://api.github.com/repos/khanhtranrk/robin-posts/contents"),
+          respJson = await resp.json();
+
+        let html = "<ul>";
+        respJson.forEach(post => {
+          html += "<li><a href='" + window.location.href + post.path.substring(0, post.name.length - 3) + "'>" + post.name.substring(0, post.name.length - 3) + "</a></li>";
+        });
+        html += "</ul>";
+
+        document.title = "robin";
+        header.innerHTML = `
+          <div style="display: flex; flex-direction: row; padding: 8px 0;">
+            <img style="height: 200px; width: 200px;" src="${window.location.origin + "/assets/robin-icon"}"/>
+            <div style="flex: 1; padding: 0 8px; height: 200px;">
+              <p style="color: #dc143c">Welcome to my site! This is a website that I created to showcase some of the topics that I have explored. It contains articles that reflect my interests.</p>
+            </div>
+          </div>
+        `;
+        content.innerHTML = html;
+      }
+
+      function b64DecodeUnicode(str) {
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+      }
+
+      async function buildPostPage() {
+        let filePath = encodeURIComponent(decodeURIComponent(window.location.href.replace(window.location.origin + '/', "") + ".md"));
+
+        // fetch data
+        let resp = await fetch("https://api.github.com/repos/khanhtranrk/robin-posts/contents/" + filePath);
+          respJson = await resp.json(),
+          fileName = respJson.name,
+          fileContent = b64DecodeUnicode(respJson.content);
+
+        // hanlde data
+        let converter = new showdown.Converter(),
+          text = fileContent,
+          html = converter.makeHtml(text);
+
+
+        document.title = fileName.substring(0, fileName.length - 3);
+        header.innerHTML = "<p class='title' style='color: #dc143c;'>" + fileName.substring(0, fileName.length - 3) + "</p>";
+        content.innerHTML = html;
+      }
+
+      async function buildErrorPage(e) {
+        document.title = "Error";
+        header.innerHTML = "<p class='title'>Error</p>";
+        content.innerHTML = "<p>Something went wrong!</p>";
+      }
+    </script>
   </body>
 </html>
