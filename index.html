@@ -76,14 +76,16 @@
 
                 let html = "<ul>";
                 respJson.forEach((post) => {
-                    html +=
-                        "<li><a href='" +
-                        window.location.href.split("#")[0] +
-                        "#/" +
-                        post.path.substring(0, post.name.length - 3) +
-                        "'>" +
-                        post.name.substring(0, post.name.length - 3) +
-                        "</a></li>";
+                    if (post.name.endsWith(".md")) {
+                        html +=
+                            "<li><a href='" +
+                            window.location.href.split("#")[0] +
+                            "#/" +
+                            post.path.substring(0, post.name.length - 3) +
+                            "'>" +
+                            post.name.substring(0, post.name.length - 3) +
+                            "</a></li>";
+                    }
                 });
                 html += "</ul>";
 
